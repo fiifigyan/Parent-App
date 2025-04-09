@@ -4,23 +4,38 @@ import { useNavigation } from '@react-navigation/native';
 import { CustomInput } from '../components/CustomInput';
 import { AuthContext } from '../context/AuthContext';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { API_CONFIG } from '../config';
 
 const PasswordRequirements = ({ password }) => {
   const requirements = [
-    { label: 'At least 8 characters', met: password.length >= 8 },
-    { label: 'One uppercase letter', met: /[A-Z]/.test(password) },
-    { label: 'One number', met: /\d/.test(password) },
-    { label: 'One special character', met: /[@$!%*?&]/.test(password) }
+    { 
+      label: `At least ${API_CONFIG.PASSWORD_REQUIREMENTS.minLength} characters`, 
+      met: password.length >= API_CONFIG.PASSWORD_REQUIREMENTS.minLength 
+    },
+    { 
+      label: 'One uppercase letter', 
+      met: API_CONFIG.PASSWORD_REQUIREMENTS.needsUppercase ? /[A-Z]/.test(password) : true 
+    },
+    { 
+      label: 'One number', 
+      met: API_CONFIG.PASSWORD_REQUIREMENTS.needsNumber ? /\d/.test(password) : true 
+    },
+    { 
+      label: 'One special character', 
+      met: API_CONFIG.PASSWORD_REQUIREMENTS.needsSpecialChar ? /[@$!%*?&]/.test(password) : true 
+    }
   ];
 
   return (
     <View style={styles.requirementsContainer}>
       {requirements.map(({ label, met }, index) => (
-        <View key={label + index} style={styles.requirementRow}>
-          <Text style={[styles.requirementDot, met ? styles.requirementMet : styles.requirementUnmet]}>
-            {met ? '●' : '○'}
-          </Text>
-          <Text style={[styles.requirementText, met ? styles.requirementMet : styles.requirementUnmet]}>
+        <View key={index} style={styles.requirementRow}>
+          <Icon 
+            name={met ? 'checkmark-circle' : 'close-circle'} 
+            size={16} 
+            color={met ? '#4CAF50' : '#757575'} 
+          />
+          <Text style={[styles.requirementText, met && styles.requirementMet]}>
             {label}
           </Text>
         </View>
@@ -41,11 +56,13 @@ const SignupScreen = () => {
   const { register, isLoading } = useContext(AuthContext);
 
   const validatePassword = (password) => {
+    const { minLength, needsUppercase, needsNumber, needsSpecialChar } = API_CONFIG.PASSWORD_REQUIREMENTS;
+    
     return (
-      password.length >= 8 &&
-      /[A-Z]/.test(password) &&
-      /\d/.test(password) &&
-      /[@$!%*?&]/.test(password)
+      password.length >= minLength &&
+      (!needsUppercase || /[A-Z]/.test(password)) &&
+      (!needsNumber || /\d/.test(password)) &&
+      (!needsSpecialChar || /[@$!%*?&]/.test(password))
     );
   };
 
@@ -64,36 +81,26 @@ const SignupScreen = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-const handleSignup = async () => {
-  if (!validateForm()) return;
-  
-  try {
-    await register({
-      email: formData.email.trim().toLowerCase(),
-      password: formData.password
-    });
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'Welcome' }],
-    });
-  } catch (error) {
-    let errorMessage = '';
+  const handleSignup = async () => {
+    if (!validateForm()) return;
     
-    if (error.message.includes('email')) {
-      errorMessage = 'Email already registered';
-    } else if (error.message.includes('password')) {
-      errorMessage = 'Password requirements not met';
-    } else if (error.message.includes('network')) {
-      errorMessage = 'Network error. Please check your connection.';
+    try {
+      await register({
+        email: formData.email.trim().toLowerCase(),
+        password: formData.password
+      });
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Welcome' }],
+      });
+    } catch (error) {
+      setErrors({ submit: error.message || 'Signup failed. Please try again.' });
     }
-    
-    setErrors({ submit: errorMessage });
-  }
-};
+  };
 
   const handleInputChange = (name, value) => {
     setFormData(prev => ({ ...prev, [name]: value }));
-    if (touched[name]) validateForm();
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
 
   const handleInputBlur = (name) => {
@@ -108,7 +115,7 @@ const handleSignup = async () => {
         <Text style={styles.subtitle}>Sign up and get started</Text>
       </View>
       <KeyboardAvoidingView style={styles.KeyboardAvoidingView}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
           <CustomInput
             label="Email *"
             value={formData.email}
@@ -138,7 +145,7 @@ const handleSignup = async () => {
 
           {errors.submit && (
             <View style={styles.errorContainer}>
-              <Icon name="sad-outline" size={20} color="red" />
+              <Icon name="sad-outline" size={20} color="#d32f2f" />
               <Text style={styles.errorText}>{errors.submit}</Text>
             </View>
           )}
@@ -149,7 +156,7 @@ const handleSignup = async () => {
             disabled={isLoading}
           >
             {isLoading ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color="white" />
             ) : (
               <Text style={styles.submitButtonText}>Create Account</Text>
             )}
@@ -161,7 +168,7 @@ const handleSignup = async () => {
               <Text style={styles.loginLink}>Log In</Text>
             </TouchableOpacity>
           </View>
-      </ScrollView>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -183,10 +190,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#03AC13',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
@@ -195,39 +199,31 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#ffffff',
+    color: 'white',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 18,
-    color: '#ffffff',
-  },
-  form: {
-    flex: 1,
-    padding: 20,
-    gap: 10,
-    backgroundColor: '#ffffff',
+    color: 'white',
   },
   requirementsContainer: {
     marginVertical: 8,
+    padding: 12,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
   },
   requirementRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginVertical: 4,
   },
-  requirementDot: {
-    fontSize: 12,
-    marginRight: 8,
-  },
   requirementText: {
     fontSize: 14,
+    color: '#757575',
+    marginLeft: 8,
   },
   requirementMet: {
     color: '#4CAF50',
-  },
-  requirementUnmet: {
-    color: '#757575',
   },
   submitButton: {
     backgroundColor: '#03AC13',
@@ -239,16 +235,10 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   submitButtonText: {
-    color: '#ffffff',
+    color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
-    textAlign:'center'
-  },
-  buttonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
+    textAlign: 'center'
   },
   loginContainer: {
     flexDirection: 'row',
@@ -265,25 +255,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  errorInput: {
-    borderColor: '#d32f2f',
-  },
-  errorIcon: {
-    marginRight: 8,
-  },
-  errorText: {
-    color: '#d32f2f',
-    fontSize: 12,
-    marginTop: 4,
-  },
   errorContainer: {
     flexDirection: 'row',
+    gap: 8,
     backgroundColor: '#ffebee',
     borderRadius: 4,
     padding: 12,
     marginBottom: 16,
     borderLeftWidth: 4,
     borderLeftColor: '#d32f2f',
+  },
+  errorText: {
+    color: '#d32f2f',
+    fontSize: 14,
   },
 });
 

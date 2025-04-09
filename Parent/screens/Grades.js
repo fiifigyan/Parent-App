@@ -170,8 +170,7 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 20,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    borderBottomEndRadius: 80,
     alignItems: 'center',
   },
   headerTitle: {

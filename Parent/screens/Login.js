@@ -4,8 +4,9 @@ import { CustomInput } from '../components/CustomInput';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { API_CONFIG } from '../config';
 
-const LoginScreen = () => {
+const Login = () => {
   const navigation = useNavigation();
   const [formData, setFormData] = useState({
     studentID: '',
@@ -14,6 +15,7 @@ const LoginScreen = () => {
   });
   
   const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
   const { login, isLoading } = useContext(AuthContext);
 
   const validateForm = () => {
@@ -22,7 +24,7 @@ const LoginScreen = () => {
     if (!formData.studentID.trim()) {
       newErrors.studentID = 'Student ID is required';
     } else if (!/^OAIS-\d{4}$/.test(formData.studentID.trim())) {
-      newErrors.studentID = 'Format: OAIS-0001 (4 digits after hyphen)';
+      newErrors.studentID = 'Format: OAIS-XXXX (4 digits after hyphen)';
     }
 
     if (!formData.email.trim()) {
@@ -33,8 +35,8 @@ const LoginScreen = () => {
     
     if (!formData.password.trim()) {
       newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+    } else if (formData.password.length < API_CONFIG.PASSWORD_REQUIREMENTS.minLength) {
+      newErrors.password = `Password must be at least ${API_CONFIG.PASSWORD_REQUIREMENTS.minLength} characters`;
     }
     
     setErrors(newErrors);
@@ -48,7 +50,7 @@ const LoginScreen = () => {
       const credentials = {
         email: formData.email.trim().toLowerCase(),
         studentID: formData.studentID.trim().toUpperCase(),
-        Password: formData.password
+        password: formData.password
       };
       
       await login(credentials);
@@ -57,40 +59,20 @@ const LoginScreen = () => {
         routes: [{ name: 'Home' }],
       });
     } catch (error) {
-      let errorMessage = 'Login failed. Please try again.';
-      
-      if (error.response?.data) {
-        const backendErrors = error.response.data;
-        
-        if (backendErrors.StudentID) {
-          setErrors(prev => ({ ...prev, studentID: backendErrors.StudentID }));
-        }
-        if (backendErrors.Password) {
-          setErrors(prev => ({ ...prev, password: backendErrors.Password }));
-        }
-        if (backendErrors.email) {
-          setErrors(prev => ({ ...prev, email: backendErrors.email }));
-        }
-        
-        errorMessage = Object.values(backendErrors)[0] || errorMessage;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      setErrors(prev => ({ ...prev, submit: errorMessage }));
+      setErrors(prev => ({ 
+        ...prev, 
+        submit: error.message || 'Login failed. Please try again.' 
+      }));
     }
   };
 
-  // Auto-format student ID as user types
   const handleStudentIDChange = (text) => {
     let formattedText = text.toUpperCase();
     
-    // Auto-insert hyphen after 4 characters
     if (formattedText.length === 4 && !formattedText.includes('-')) {
       formattedText = formattedText.slice(0, 4) + '-' + formattedText.slice(4);
     }
-    
-    // Limit to OAIS-0000 format
+
     if (formattedText.length > 9) {
       formattedText = formattedText.slice(0, 9);
     }
@@ -111,7 +93,7 @@ const LoginScreen = () => {
             label="Student ID *"
             value={formData.studentID}
             onChangeText={handleStudentIDChange}
-            error={errors.studentID}
+            error={touched.studentID && errors.studentID}
             placeholder="OAIS-0000"
             autoCapitalize="characters"
             leftIcon={<Icon name="id-card" size={20} color="#666" />}
@@ -124,7 +106,7 @@ const LoginScreen = () => {
               setFormData(prev => ({ ...prev, email: text }));
               if (errors.email) setErrors(prev => ({ ...prev, email: '' }));
             }}
-            error={errors.email}
+            error={touched.email && errors.email}
             placeholder="Enter your email"
             keyboardType="email-address"
             autoCapitalize="none"
@@ -138,7 +120,7 @@ const LoginScreen = () => {
               setFormData(prev => ({ ...prev, password: text }));
               if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
             }}
-            error={errors.password}
+            error={touched.password && errors.password}
             placeholder="Enter your password"
             secureTextEntry
             leftIcon={<Icon name="lock-closed" size={20} color="#666" />}
@@ -165,7 +147,7 @@ const LoginScreen = () => {
           >
             <View style={styles.buttonContent}>
               {isLoading ? (
-                <ActivityIndicator color="aliceblue" />
+                <ActivityIndicator color="white" />
               ) : (
                 <Text style={styles.submitButtonText}>Login</Text>
               )}
@@ -200,10 +182,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#03AC13',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
@@ -212,18 +191,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: 'aliceblue',
+    color: 'white',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 18,
-    color: 'aliceblue',
-  },
-  form: {
-    flex: 1,
-    padding: 20,
-    gap: 10,
-    backgroundColor: '#f9f9f9',
+    color: 'white',
   },
   forgotPassword: {
     alignSelf: 'flex-end',
@@ -250,7 +223,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   submitButtonText: {
-    color: 'aliceblue',
+    color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
   },
@@ -269,14 +242,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  errorInput: {
-    borderColor: '#d32f2f',
-  },
-  errorText: {
-    color: '#d32f2f',
-    fontSize: 12,
-    marginTop: 4,
-  },
   errorContainer: {
     flexDirection: 'row',
     gap: 8,
@@ -287,6 +252,10 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
     borderLeftColor: '#d32f2f',
   },
+  errorText: {
+    color: '#d32f2f',
+    fontSize: 14,
+  },
 });
 
-export default LoginScreen;
+export default Login;

@@ -1,14 +1,24 @@
 import React, { useState, useContext } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator, StyleSheet, SafeAreaView } from 'react-native';
+import { 
+  View, 
+  Text, 
+  TouchableOpacity, 
+  ScrollView, 
+  Alert, 
+  ActivityIndicator, 
+  StyleSheet, 
+  SafeAreaView 
+} from 'react-native';
 import CustomInput from '../components/CustomInput';
-import authService from '../services/AuthService';
 import { AuthContext } from '../context/AuthContext';
+import Icon from 'react-native-vector-icons/Ionicons';
 
-const ForgotPasswordScreen = ({ navigation }) => {
+const ForgotPassword = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [touched, setTouched] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { forgotPassword } = useContext(AuthContext);
 
   const validateEmail = () => {
     const trimmedEmail = email.trim();
@@ -32,14 +42,13 @@ const ForgotPasswordScreen = ({ navigation }) => {
 
     try {
       setIsLoading(true);
-      await authService.forgotPassword(email);
+      await forgotPassword(email);
       Alert.alert(
         'Check Your Email',
         'If an account exists with this email, you will receive password reset instructions.',
         [{ text: 'OK', onPress: () => navigation.goBack() }]
       );
     } catch (err) {
-      console.error('ForgotPassword Error:', err);
       Alert.alert('Error', err.message || 'Unable to process your request. Please try again later.');
     } finally {
       setIsLoading(false);
@@ -47,67 +56,63 @@ const ForgotPasswordScreen = ({ navigation }) => {
   };
 
   return (
-      <SafeAreaView style={styles.safeArea}>
-        <ScrollView style={styles.container}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Reset Password</Text>
-            <Text style={styles.subtitle}>
-              Enter your email address and we'll send you instructions to reset your password.
-            </Text>
-          </View>
-        
-          <View style={styles.form}>
-            <CustomInput
-              name="email"
-              label="Email Address"
-              placeholder="Enter your email"
-              value={email}
-              onChangeText={(text) => setEmail(text.trim())}
-              error={touched ? error : ''}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              onBlur={() => {
-                setTouched(true);
-                const emailError = validateEmail();
-                setError(emailError);
-              }}
-            />
-            
-            <TouchableOpacity 
-              style={[styles.button, isLoading && styles.buttonDisabled]} 
-              onPress={handleForgot}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <ActivityIndicator color="aliceblue" />
-              ) : (
-                <Text style={styles.buttonText}>Send</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Reset Password</Text>
+          <Text style={styles.subtitle}>
+            Enter your email address and we'll send you instructions to reset your password.
+          </Text>
+        </View>
+      
+        <View style={styles.form}>
+          <CustomInput
+            label="Email Address"
+            placeholder="Enter your email"
+            value={email}
+            onChangeText={(text) => {
+              setEmail(text.trim());
+              if (error) setError('');
+            }}
+            error={touched ? error : ''}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            onBlur={() => setTouched(true)}
+            leftIcon={<Icon name="mail" size={20} color="#666" />}
+          />
+          
           <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
+            style={[styles.button, isLoading && styles.buttonDisabled]} 
+            onPress={handleForgot}
+            disabled={isLoading}
           >
-            <Text style={styles.backButtonText}>Back to Login</Text>
+            {isLoading ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text style={styles.buttonText}>Send Reset Link</Text>
+            )}
           </TouchableOpacity>
-        </ScrollView>
-      </SafeAreaView>
+        </View>
+
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.backButtonText}>Back to Login</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: 'darkblue',
     flex: 1,
+    backgroundColor: '#03AC13',
   },
   container: {
-    flex: 1,
-    backgroundColor: '#f9f9f9',
-  },
-  scrollContainer: {
     flexGrow: 1,
+    backgroundColor: 'aliceblue',
   },
   header: {
     padding: 20,
@@ -117,39 +122,41 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: 'aliceblue',
+    color: 'white',
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 18,
-    color: 'aliceblue',
+    fontSize: 16,
+    color: 'white',
+    textAlign: 'center',
   },
   form: {
     padding: 20,
-    gap: 10,
   },
   button: {
     backgroundColor: '#03AC13',
-    padding: 12,
+    padding: 16,
     borderRadius: 8,
     alignItems: 'center',
+    marginTop: 20,
   },
   buttonDisabled: {
-    backgroundColor: '#ccc',
+    opacity: 0.6,
   },
-  buttonText: {    
-    fontSize: 16,    
-    fontWeight: 'bold',    
-    color: 'aliceblue',  
+  buttonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'white',
   },
-  backButton: {    
-    marginTop: 20,    
-    alignItems: 'center',  
+  backButton: {
+    marginTop: 20,
+    alignItems: 'center',
   },
-  backButtonText: {    
-    fontSize: 16,    
-    color: '#03AC13',  
+  backButtonText: {
+    fontSize: 16,
+    color: '#03AC13',
+    fontWeight: '600',
   },
 });
 
-export default ForgotPasswordScreen;
+export default ForgotPassword;

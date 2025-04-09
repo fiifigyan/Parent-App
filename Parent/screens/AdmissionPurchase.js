@@ -9,7 +9,7 @@ import { shareAsync } from 'expo-sharing';
 import PaymentMethod from '../screens/PaymentMethod';
 
 const AdmissionPurchase = ({ route, navigation }) => {
-  const { level, gender, amount, feeDetails } = route.params;
+  const { level, gender, amount, feeDetails, admissionFormPrice } = route.params;
   
   const [studentName, setStudentName] = useState('');
   const [parentName, setParentName] = useState('');
@@ -216,16 +216,14 @@ const AdmissionPurchase = ({ route, navigation }) => {
               <DataTable.Title numeric style={styles.tableHeaderTitle}>Amount (GHS)</DataTable.Title>
             </DataTable.Header>
 
-            {feeDetails.filter(item => item.id !== 'total').map(item => (
-              <DataTable.Row key={item.id} style={styles.tableRow}>
-                <DataTable.Cell style={styles.tableCell}>
-                  <Text style={styles.itemName}>{item.name}</Text>
-                </DataTable.Cell>
-                <DataTable.Cell numeric style={styles.tableCell}>
-                  <Text style={styles.amountText}>{item.amount.toFixed(2)}</Text>
-                </DataTable.Cell>
-              </DataTable.Row>
-            ))}
+            <DataTable.Row style={styles.tableRow}>
+              <DataTable.Cell style={styles.tableCell}>
+                <Text style={styles.itemName}>Admission Form</Text>
+              </DataTable.Cell>
+              <DataTable.Cell numeric style={styles.tableCell}>
+                <Text style={styles.amountText}>{amount.toFixed(2)}</Text>
+              </DataTable.Cell>
+            </DataTable.Row>
 
             <DataTable.Row style={styles.totalRow}>
               <DataTable.Cell style={styles.totalCell}>
@@ -250,16 +248,16 @@ const AdmissionPurchase = ({ route, navigation }) => {
       </ScrollView>
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity 
-          style={[styles.payButton, isProcessing && styles.disabledButton]}
-          onPress={handlePaymentInitiation}
-          disabled={isProcessing}
-        >
-          <Icon name="wallet-outline" size={20} color="aliceblue" />
-          <Text style={styles.buttonText}>
-            {isProcessing ? 'Processing...' : `Pay GHS ${amount.toFixed(2)}`}
-          </Text>
-        </TouchableOpacity>
+      <TouchableOpacity 
+        style={[styles.payButton, isProcessing && styles.disabledButton]}
+        onPress={handlePaymentInitiation}
+        disabled={isProcessing}
+      >
+        <Icon name="wallet-outline" size={20} color="aliceblue" />
+        <Text style={styles.buttonText}>
+          {isProcessing ? 'Processing...' : `Pay GHS ${amount.toFixed(2)}`}
+        </Text>
+      </TouchableOpacity>
       </View>
     </View>
   );

@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { PaymentContext } from '../context/PaymentContext';
 
-const FeeDetailScreen = ({ navigation }) => {
+const Fees = ({ navigation }) => {
   const { payments, error } = useContext(PaymentContext);
 
   // Mock fee data (replace with actual data from your backend)
@@ -222,4 +222,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default FeeDetailScreen;
+export default Fees;

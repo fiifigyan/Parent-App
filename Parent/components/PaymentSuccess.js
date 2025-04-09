@@ -21,7 +21,7 @@ const PaymentSuccess = ({ route, navigation }) => {
 
       <TouchableOpacity
         style={styles.button}
-        onPress={() => navigation.replace('Drawer')}
+        onPress={() => navigation.replace('Admission')}
       >
         <Text style={styles.buttonText}>Done</Text>
       </TouchableOpacity>

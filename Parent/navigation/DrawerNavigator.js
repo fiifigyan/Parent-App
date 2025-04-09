@@ -9,6 +9,7 @@ import AdmissionForm from '../screens/AdmissionForm';
 import PaymentHistoryScreen from '../screens/History';
 import AddAccountScreen from '../screens/AddAccount';
 import SwitchAccountScreen from '../screens/SwitchAccount';
+import AdmissionPurchase from '../screens/AdmissionPurchase';
 
 const Drawer = createDrawerNavigator();
 
@@ -27,8 +28,8 @@ const DrawerNavigator = () => {
         sceneContainerStyle: {
           backgroundColor: '#ffffff',
         },
-        drawerActiveTintColor: '#6366f1',
-        drawerInactiveTintColor: '#6b7280',
+        drawerActiveTintColor: '#03AC13',
+        drawerInactiveTintColor: 'aliceblue',
         drawerLabelStyle: {
           fontSize: 15,
           fontWeight: '500',
@@ -57,8 +58,8 @@ const DrawerNavigator = () => {
         }}
       />
       <Drawer.Screen
-        name="Admission"
-        component={AdmissionForm}
+        name="Apply for Admission"
+        component={AdmissionPurchase}
         options={{
           drawerIcon: ({ color }) => (
             <Icon name="document-text-outline" size={22} color={color} />

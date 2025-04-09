@@ -1,20 +1,36 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import AuthService from '../services/AuthService';
+import AuthService from '../services/AuthenService';
+import jwtDecode from 'jwt-decode';
+import { STORAGE_KEYS } from '../config';
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [userInfo, setUserInfo] = useState(null);
+  const [authToken , setAuthToken] = useState(null);
   const [initialLoading, setInitialLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [isNewUser, setIsNewUser] = useState(false);
 
+  const hasScope = useCallback((requiredScope) => {
+    if (!authToken) return false;
+    
+    try {
+      const decoded = jwtDecode(authToken);
+      const tokenScopes = decoded.scope ? decoded.scope.split(' ') : [];
+      return tokenScopes.includes(requiredScope);
+    } catch (error) {
+      console.error('Scope check error:', error);
+      return false;
+    }
+  }, [authToken]);
+
   const saveUserData = useCallback(async (data) => {
     try {
       await AsyncStorage.multiSet([
-        ['userInfo', JSON.stringify(data)],
-        ['authToken', data.token]
+        [STORAGE_KEYS.USER_INFO, JSON.stringify(data)],
+        [STORAGE_KEYS.AUTH_TOKEN, data.token]
       ]);
     } catch (error) {
       console.error('Failed to save user data:', error);
@@ -24,7 +40,11 @@ export const AuthProvider = ({ children }) => {
 
   const loadUserData = useCallback(async () => {
     try {
-      const [userInfoString, token] = await AsyncStorage.multiGet(['userInfo', 'authToken']);
+      const [userInfoString, token] = await AsyncStorage.multiGet([
+        STORAGE_KEYS.USER_INFO, 
+        STORAGE_KEYS.AUTH_TOKEN
+      ]);
+      
       if (userInfoString[1] && token[1]) {
         return JSON.parse(userInfoString[1]);
       }
@@ -32,6 +52,19 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Failed to load user data:', error);
       return null;
+    }
+  }, []);
+
+  const clearAuthData = useCallback(async () => {
+    try {
+      await AsyncStorage.multiRemove([
+        STORAGE_KEYS.USER_INFO, 
+        STORAGE_KEYS.AUTH_TOKEN
+      ]);
+      setUserInfo(null);
+      setIsNewUser(false);
+    } catch (error) {
+      console.error('Failed to clear auth data:', error);
     }
   }, []);
 
@@ -51,26 +84,16 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setInitialLoading(false);
     }
-  }, [loadUserData]);
-
-  const clearAuthData = useCallback(async () => {
-    await AsyncStorage.multiRemove(['userInfo', 'authToken']);
-    setUserInfo(null);
-    setIsNewUser(false);
-  }, []);
+  }, [loadUserData, clearAuthData]);
 
   useEffect(() => {
     initializeAuth();
   }, [initializeAuth]);
 
-  const login = async (credentials) => {
+  const authActionWrapper = async (action, ...args) => {
     setIsLoading(true);
     try {
-      const userData = await AuthService.login(credentials);
-      await saveUserData(userData);
-      setUserInfo(userData);
-      setIsNewUser(false);
-      return userData;
+      return await action(...args);
     } catch (error) {
       throw error;
     } finally {
@@ -78,32 +101,37 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (userData) => {
-    setIsLoading(true);
-    try {
-      const response = await AuthService.signup(userData);
-      await saveUserData(response);
-      setUserInfo(response);
-      setIsNewUser(true);
-      return response;
-    } catch (error) {
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const login = (credentials) => authActionWrapper(async () => {
+    const userData = await AuthService.login(credentials);
+    await saveUserData(userData);
+    setUserInfo(userData);
+    setIsNewUser(false);
+    return userData;
+  });
 
-  const logout = async () => {
-    setIsLoading(true);
+  const register = (userData) => authActionWrapper(async () => {
+    const response = await AuthService.signup(userData);
+    await saveUserData(response);
+    setUserInfo(response);
+    setIsNewUser(true);
+    return response;
+  });
+
+  const forgotPassword = (email) => authActionWrapper(() => 
+    AuthService.forgotPassword(email)
+  );
+
+  const resetPassword = (token, password) => authActionWrapper(() => 
+    AuthService.resetPassword(token, password)
+  );
+
+  const logout = () => authActionWrapper(async () => {
     try {
       await AuthService.logout();
-    } catch (error) {
-      console.error('Logout API error:', error);
     } finally {
       await clearAuthData();
-      setIsLoading(false);
     }
-  };
+  });
 
   return (
     <AuthContext.Provider
@@ -115,6 +143,9 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         logout,
+        forgotPassword,
+        resetPassword,
+        hasScope,
       }}
     >
       {children}

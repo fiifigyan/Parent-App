@@ -3,39 +3,44 @@ import {
   View, 
   Text, 
   StyleSheet, 
-  ScrollView, 
+  FlatList, 
   Image, 
   TouchableOpacity, 
-  Linking, 
-  Share,
   ActivityIndicator,
   Alert
 } from 'react-native';
+import { Calendar } from 'react-native-calendars';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { useRoute, useNavigation } from '@react-navigation/native';
-import { fetchEventById, registerForEvent } from '../services/EventService';
+import EventService from '../services/EventService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const EventScreen = () => {
-  const route = useRoute();
-  const navigation = useNavigation();
-  const { event: initialEvent, eventId } = route.params || {};
-  
-  const [event, setEvent] = useState(initialEvent);
-  const [loading, setLoading] = useState(!initialEvent);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [registering, setRegistering] = useState(false);
+  const [studentId, setStudentId] = useState(null);
 
   useEffect(() => {
-    if (!initialEvent && eventId) {
-      loadEvent();
-    }
-  }, [eventId]);
+    const initialize = async () => {
+      try {
+        const storedStudentId = await AsyncStorage.getItem('selectedStudent');
+        setStudentId(storedStudentId);
+        await loadEvents();
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+    initialize();
+  }, [selectedDate]);
 
-  const loadEvent = async () => {
+  const loadEvents = async () => {
     try {
       setLoading(true);
-      const data = await fetchEventById(eventId);
-      setEvent(data);
+      const data = await EventService.fetchEventsByDate(selectedDate);
+      setEvents(data);
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -44,39 +49,33 @@ const EventScreen = () => {
     }
   };
 
-  const handleBack = () => {
-    navigation.goBack();
-  };
-
-  const handleShare = async () => {
-    try {
-      await Share.share({
-        message: `Check out this event: ${event.title}\n\n${event.description}\n\nDate: ${event.date}\nLocation: ${event.location}`,
-      });
-    } catch (error) {
-      Alert.alert('Error', 'Failed to share event');
+  const handleRegister = async (eventId) => {
+    if (!studentId) {
+      Alert.alert('Error', 'No student selected');
+      return;
     }
-  };
 
-  const handleOpenLocation = () => {
-    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`;
-    Linking.openURL(url).catch(err => Alert.alert('Error', "Couldn't open maps"));
-  };
-
-  const handleRegister = async () => {
-    if (!event || event.registered) return;
-    
     try {
-      setRegistering(true);
-      const updatedEvent = await registerForEvent(event.id, '123'); // Replace with actual student ID
-      setEvent(updatedEvent);
+      const updatedEvent = await EventService.registerForEvent(eventId, studentId);
+      setEvents(events.map(event => 
+        event.id === updatedEvent.id ? updatedEvent : event
+      ));
       Alert.alert('Success', 'Registration successful!');
     } catch (err) {
-      Alert.alert('Error', 'Failed to register for event');
-    } finally {
-      setRegistering(false);
+      Alert.alert('Error', err.message || 'Failed to register for event');
     }
   };
+
+  const markedDates = {
+    [selectedDate]: { selected: true, selectedColor: '#03AC13' }
+  };
+
+  const formattedDate = new Date(selectedDate).toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
 
   if (loading) {
     return (
@@ -89,134 +88,168 @@ const EventScreen = () => {
   if (error) {
     return (
       <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Error loading event: {error}</Text>
-        <TouchableOpacity onPress={loadEvent} style={styles.retryButton}>
+        <Text style={styles.errorText}>Error loading events: {error}</Text>
+        <TouchableOpacity onPress={loadEvents} style={styles.retryButton}>
           <Text style={styles.retryButtonText}>Try Again</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
-  if (!event) {
-    return (
-      <View style={styles.container}>
-        <Text>No event data available</Text>
-      </View>
-    );
-  }
-
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-          <Icon name="arrow-back" size={24} color="#03AC13" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Event Details</Text>
-        <TouchableOpacity onPress={handleShare} style={styles.shareButton}>
-          <Icon name="share-social" size={24} color="#03AC13" />
-        </TouchableOpacity>
-      </View>
+    <View style={styles.container}>
+      <TouchableOpacity 
+        style={styles.dateSelector}
+        onPress={() => setShowCalendar(!showCalendar)}
+      >
+        <Icon name="calendar-today" size={20} color="#03AC13" />
+        <Text style={styles.dateText}>{formattedDate}</Text>
+        <Icon name={showCalendar ? "keyboard-arrow-up" : "keyboard-arrow-down"} size={24} color="#03AC13" />
+      </TouchableOpacity>
 
-      <Image 
-        source={{ uri: event.image }} 
-        style={styles.eventImage}
-        resizeMode="cover"
-      />
-
-      <View style={styles.content}>
-        <View style={styles.titleContainer}>
-          <Text style={styles.title}>{event.title}</Text>
-          <View style={styles.dateContainer}>
-            <Icon name="calendar" size={16} color="#03AC13" />
-            <Text style={styles.date}>{event.date} • {event.time}</Text>
-          </View>
+      {showCalendar && (
+        <View style={styles.calendarContainer}>
+          <Calendar
+            markedDates={markedDates}
+            onDayPress={(day) => {
+              setSelectedDate(day.dateString);
+              setShowCalendar(false);
+            }}
+            theme={{
+              todayTextColor: '#03AC13',
+              arrowColor: '#03AC13',
+              selectedDayBackgroundColor: '#03AC13',
+              selectedDayTextColor: '#ffffff',
+            }}
+          />
         </View>
+      )}
 
-        <TouchableOpacity 
-          style={styles.locationContainer} 
-          onPress={handleOpenLocation}
-        >
-          <Icon name="location" size={18} color="#03AC13" />
-          <Text style={styles.location}>{event.location}</Text>
-          <Icon name="open-outline" size={16} color="#03AC13" />
-        </TouchableOpacity>
-
-        <View style={styles.categoryContainer}>
-          <View style={[styles.categoryBadge, { backgroundColor: getCategoryColor(event.category) }]}>
-            <Text style={styles.categoryText}>{event.category}</Text>
-          </View>
-          {event.registered && (
-            <View style={styles.registeredBadge}>
-              <Text style={styles.registeredText}>Registered</Text>
+      {events.length > 0 ? (
+        <FlatList
+          data={events}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <View style={styles.eventCard}>
+              <Image 
+                source={{ uri: item.image }} 
+                style={styles.eventImage}
+                resizeMode="cover"
+              />
+              <View style={styles.eventContent}>
+                <Text style={styles.eventTitle}>{item.title}</Text>
+                <View style={styles.eventDetails}>
+                  <View style={styles.detailItem}>
+                    <Icon name="calendar" size={16} color="#03AC13" />
+                    <Text style={styles.detailText}>{item.date} • {item.time}</Text>
+                  </View>
+                  <View style={styles.detailItem}>
+                    <Icon name="location" size={16} color="#03AC13" />
+                    <Text style={styles.detailText}>{item.location}</Text>
+                  </View>
+                </View>
+                <TouchableOpacity 
+                  style={[
+                    styles.registerButton,
+                    item.registered && { backgroundColor: '#4CAF50' }
+                  ]} 
+                  onPress={() => handleRegister(item.id)}
+                  disabled={item.registered}
+                >
+                  <Text style={styles.buttonText}>
+                    {item.registered ? 'Registered' : 'Register'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           )}
+        />
+      ) : (
+        <View style={styles.emptyState}>
+          <Icon name="event-busy" size={48} color="#ccc" />
+          <Text style={styles.emptyText}>No events scheduled</Text>
         </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>About This Event</Text>
-          <Text style={styles.description}>{event.description}</Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Additional Information</Text>
-          <View style={styles.detailItem}>
-            <Icon name="people" size={18} color="#03AC13" />
-            <Text style={styles.detailText}>Open to all students and parents</Text>
-          </View>
-          <View style={styles.detailItem}>
-            <Icon name="time" size={18} color="#03AC13" />
-            <Text style={styles.detailText}>Duration: {event.duration || '3 hours'}</Text>
-          </View>
-          <View style={styles.detailItem}>
-            <Icon name="information" size={18} color="#03AC13" />
-            <Text style={styles.detailText}>Bring your student ID for entry</Text>
-          </View>
-        </View>
-
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity 
-            style={[
-              styles.primaryButton,
-              event.registered && { backgroundColor: '#4CAF50' }
-            ]} 
-            onPress={handleRegister}
-            disabled={event.registered || registering}
-          >
-            {registering ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>
-                {event.registered ? 'Already Registered' : 'Register Now'}
-              </Text>
-            )}
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.secondaryButton}>
-            <Text style={styles.secondaryButtonText}>Add to Calendar</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </ScrollView>
+      )}
+    </View>
   );
 };
-
-const getCategoryColor = (category) => {
-  switch(category.toLowerCase()) {
-    case 'academic':
-      return '#4CAF50';
-    case 'sports':
-      return '#2196F3';
-    case 'cultural':
-      return '#9C27B0';
-    default:
-      return '#03AC13';
-  }
-};
-
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#ffffff',
+  },
+  dateSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 15,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 10,
+    margin: 16,
+  },
+  dateText: {
+    marginHorizontal: 10,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  calendarContainer: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 10,
+    overflow: 'hidden',
+    elevation: 3,
+    backgroundColor: '#ffffff',
+  },
+  eventCard: {
     backgroundColor: '#fff',
+    borderRadius: 10,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  eventImage: {
+    width: '100%',
+    height: 150,
+  },
+  eventContent: {
+    padding: 16,
+  },
+  eventTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
+  },
+  eventDetails: {
+    marginBottom: 16,
+  },
+  detailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  detailText: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 8,
+  },
+  registerButton: {
+    backgroundColor: '#03AC13',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   loadingContainer: {
     flex: 1,
@@ -243,142 +276,15 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 15,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  backButton: {
-    padding: 5,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#03AC13',
-  },
-  shareButton: {
-    padding: 5,
-  },
-  eventImage: {
-    width: '100%',
-    height: 250,
-  },
-  content: {
-    padding: 20,
-  },
-  titleContainer: {
-    marginBottom: 15,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 5,
-  },
-  dateContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  date: {
-    fontSize: 16,
-    color: '#666',
-    marginLeft: 5,
-  },
-  locationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-    padding: 10,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
-  },
-  location: {
-    fontSize: 16,
-    color: '#333',
-    marginLeft: 5,
-    marginRight: 5,
+  emptyState: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  categoryContainer: {
-    flexDirection: 'row',
-    marginBottom: 20,
-  },
-  categoryBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 15,
-    marginRight: 10,
-  },
-  categoryText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  registeredBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 15,
-    backgroundColor: '#4CAF50',
-  },
-  registeredText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  section: {
-    marginBottom: 25,
-  },
-  sectionTitle: {
+  emptyText: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#03AC13',
-    marginBottom: 10,
-  },
-  description: {
-    fontSize: 16,
-    lineHeight: 24,
-    color: '#555',
-  },
-  detailItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  detailText: {
-    fontSize: 16,
-    color: '#555',
-    marginLeft: 10,
-  },
-  buttonContainer: {
-    marginTop: 20,
-  },
-  primaryButton: {
-    backgroundColor: '#03AC13',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  secondaryButton: {
-    borderWidth: 1,
-    borderColor: '#03AC13',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  secondaryButtonText: {
-    color: '#03AC13',
-    fontSize: 16,
-    fontWeight: 'bold',
+    color: '#999',
+    marginTop: 16,
   },
 });
 

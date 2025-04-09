@@ -2,7 +2,6 @@ import React, { useContext, useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, ActivityIndicator, RefreshControl, TouchableOpacity } from 'react-native';
 import { AdmissionContext } from '../context/AdmissionContext';
 import { useAuth } from '../context/AuthContext';
-import SuccessModal from '../components/SuccessModal';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 const AdmissionStatus = ({ route }) => {
@@ -12,9 +11,8 @@ const AdmissionStatus = ({ route }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showSuccessBanner, setShowSuccessBanner] = useState(false);
 
-  // Check if coming from successful submission
   const applicationId = route?.params?.applicationId;
 
   const fetchAdmissionStatus = async () => {
@@ -22,23 +20,20 @@ const AdmissionStatus = ({ route }) => {
       setError(null);
       setIsLoading(true);
       
-      // Use the context method which already handles auth token
       const data = await getAdmissionStatus();
       
       if (applicationId && data) {
-        // Find the specific application if we have an ID
         const specificApp = Array.isArray(data) 
           ? data.find(app => app.id === applicationId) 
           : data;
         setAdmissionData(specificApp ? [specificApp] : []);
       } else {
-        // Handle both array and single object responses
         setAdmissionData(Array.isArray(data) ? data : (data ? [data] : []));
       }
 
-      // Show success modal if coming from form submission
-      if (applicationId && !showSuccessModal) {
-        setShowSuccessModal(true);
+      if (applicationId) {
+        setShowSuccessBanner(true);
+        setTimeout(() => setShowSuccessBanner(false), 3000);
       }
     } catch (error) {
       console.error('Failed to fetch admission status:', error);
@@ -138,6 +133,14 @@ const AdmissionStatus = ({ route }) => {
           />
         }
       >
+        {showSuccessBanner && (
+          <View style={styles.successBanner}>
+            <View style={styles.progressBar} />
+            <Icon name="checkmark-circle" size={20} color="#4CAF50" />
+            <Text style={styles.successText}>Application submitted successfully!</Text>
+          </View>
+        )}
+
         <Text style={styles.title}>Admission Status</Text>
         
         {error && (
@@ -162,15 +165,6 @@ const AdmissionStatus = ({ route }) => {
           </View>
         )}
       </ScrollView>
-
-      <SuccessModal
-        visible={showSuccessModal}
-        onClose={() => setShowSuccessModal(false)}
-        title="Application Submitted!"
-        message="Your admission application has been successfully submitted. You can check the status here."
-        buttonText="View Status"
-        applicationId={applicationId}
-      />
     </View>
   );
 };
@@ -199,6 +193,22 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#03AC13',
+    marginBottom: 16,
+  },
+  successBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8F5E9',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#4CAF50',
+  },
+  successText: {
+    color: '#2E7D32',
+    marginLeft: 8,
+    fontWeight: '500',
   },
   statusCard: {
     backgroundColor: '#fff',
@@ -251,6 +261,15 @@ const styles = StyleSheet.create({
   },
   statusText_rejected: {
     color: '#f44336',
+  },
+  progressBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    height: 3,
+    backgroundColor: '#4CAF50',
+    width: '100%',
+    animation: 'progress 3s linear',
   },
   detailRow: {
     flexDirection: 'row',

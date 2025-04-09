@@ -36,7 +36,7 @@ const slides = [
   },
 ];
 
-const OnboardingScreen = ({ navigation }) => {
+const Onboarding = ({ navigation }) => {
   const [showRealApp, setShowRealApp] = useState(false);
 
   const renderItem = ({ item }) => (
@@ -152,4 +152,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default OnboardingScreen;
+export default Onboarding;

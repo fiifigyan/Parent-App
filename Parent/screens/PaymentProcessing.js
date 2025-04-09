@@ -15,7 +15,6 @@ const PaymentProcessing = ({ route, navigation }) => {
   });
   const [errors, setErrors] = useState({});
 
-  // Validation functions
   const validateMoMo = () => {
     const newErrors = {};
     if (!inputs.phoneNumber) {
@@ -147,7 +146,7 @@ const PaymentProcessing = ({ route, navigation }) => {
               keyboardType="number-pad"
               value={inputs.cardNumber.replace(/(.{4})/g, '$1 ').trim()}
               onChangeText={(text) => handleInputChange('cardNumber', text)}
-              maxLength={19} // 16 digits + 3 spaces
+              maxLength={19}
             />
             {errors.cardNumber && <Text style={styles.errorText}>{errors.cardNumber}</Text>}
             
@@ -197,9 +196,9 @@ const PaymentProcessing = ({ route, navigation }) => {
             
             <View style={styles.transferDetails}>
               <Text style={styles.bankTitle}>Bank Details</Text>
-              <DetailRow icon="hospital" label="Bank Name" value="Ghana Commercial Bank" />
+              <DetailRow icon="home" label="Bank Name" value="Fidelity Bank Ghana" />
               <DetailRow icon="code" label="Branch Code" value="GH-ACC-100" />
-              <DetailRow icon="person" label="Account Name" value="Ghana Premier Academy" />
+              <DetailRow icon="person" label="Account Name" value="Ofori Atta Int. School" />
             </View>
           </>
         );

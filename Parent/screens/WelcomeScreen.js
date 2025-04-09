@@ -73,8 +73,8 @@ const WelcomeScreen = () => {
                     <QuickActionCard
                         iconName="wallet-outline"
                         title="Bill For New Admissions"
-                        description="View payment breadown"
-                        onPress={() => navigation.navigate('FeeBreakdown')}
+                        description="View the breakdown of your admission fees"
+                        onPress={() => navigation.navigate('AdmissionBreakdown')}
                         color="#ff9800"
                     />
                 </View>

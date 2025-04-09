@@ -2,8 +2,9 @@ import React, { useContext, useState } from 'react';
 import { View, StyleSheet, Image, Text, TouchableOpacity, Animated } from 'react-native';
 import { DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import { AuthContext } from '../context/AuthContext';
+import { LinearGradient } from 'expo-linear-gradient';
 import { appConfig } from '../config';
 import * as Haptics from 'expo-haptics';
 
@@ -48,92 +49,96 @@ const CustomDrawer = (props) => {
 
   return (
     <View style={styles.container}>
-      <DrawerContentScrollView 
-        {...props} 
-        contentContainerStyle={styles.scrollContainer}
-      >
-        <View style={styles.drawerHeader}>
-          <Image
-            source={require('../assets/icons/OAIS-logo.png')}
-            style={styles.logo}
-          />
-          <Text style={styles.appName}>{appConfig.APP_NAME}</Text>
-        </View>
+      <LinearGradient colors={['#03AC13', '#03C04A']} style={{ flex: 1 }}>
 
-        <View style={styles.profileSection}>
-          <Image
-            source={userInfo?.profileImageUrl || require('../assets/images/fiifi1.jpg')}
-            style={styles.avatar}
-          />
-          <View style={styles.profileInfo}>
-            <Text style={styles.userName} numberOfLines={1}>
-              {userInfo?.fname || 'John Doe'}
-            </Text>
-            <Text style={styles.userEmail} numberOfLines={1}>
-              {userInfo?.email || 'user@example.com'}
-            </Text>
-            <TouchableOpacity 
-              onPress={() => navigateWithHaptic('Student')}
-              activeOpacity={0.7}
-            >
-              <View style={styles.profileButton}>
-                <Text style={styles.viewProfile}>View Profile</Text>
-                <Icon name="chevron-forward" size={16} color="#6366f1" />
-              </View>
-            </TouchableOpacity>
+          <View style={styles.drawerHeader}>
+            <Image
+              source={require('../assets/icons/OAIS-logo.png')}
+              style={styles.logo}
+            />
+            <Text style={styles.appName}>{appConfig.APP_NAME}</Text>
           </View>
-        </View>
+          <View style={styles.divider} />
+
+          <View style={styles.profileSection}>
+            <Image
+              source={userInfo?.profileImageUrl || require('../assets/images/fiifi1.jpg')}
+              style={styles.avatar}
+            />
+            <View style={styles.profileInfo}>
+              <Text style={styles.userName} numberOfLines={1}>
+                {userInfo?.fname || 'John Doe'}
+              </Text>
+              <Text style={styles.userEmail} numberOfLines={1}>
+                {userInfo?.email || 'user@example.com'}
+              </Text>
+              <TouchableOpacity 
+                onPress={() => navigateWithHaptic('Student')}
+                activeOpacity={0.7}
+              >
+                <View style={styles.profileButton}>
+                  <Text style={styles.viewProfile}>View Profile</Text>
+                  <Icon name="keyboard-arrow-right" size={16} color="aliceblue" />
+                </View>
+              </TouchableOpacity>
+            </View>
+          </View>
+          <View style={styles.divider} />
+        <DrawerContentScrollView 
+          {...props} 
+          contentContainerStyle={styles.scrollContainer}
+        >
+          <DrawerItemList {...props} />
+        </DrawerContentScrollView>
 
         <View style={styles.divider} />
-        <DrawerItemList {...props} />
-      </DrawerContentScrollView>
+        <View style={styles.drawerFooter}>
+          <Animated.View style={{ transform: [{ scale: scaleValue }] }}>
+            <TouchableOpacity
+              style={styles.footerItem}
+              onPressIn={handlePressIn}
+              onPressOut={handlePressOut}
+              onPress={() => navigateWithHaptic('Settings')}
+              activeOpacity={0.7}
+            >
+              <View style={styles.iconContainer}>
+                <Icon name="settings" size={20} color="#03CA13" />
+              </View>
+              <Text style={styles.footerItemText}>Settings</Text>
+            </TouchableOpacity>
+          </Animated.View>
 
-      <View style={styles.drawerFooter}>
-        <Animated.View style={{ transform: [{ scale: scaleValue }] }}>
-          <TouchableOpacity
-            style={styles.footerItem}
-            onPressIn={handlePressIn}
-            onPressOut={handlePressOut}
-            onPress={() => navigateWithHaptic('Settings')}
-            activeOpacity={0.7}
-          >
-            <View style={styles.iconContainer}>
-              <Icon name="settings-outline" size={20} color="#6366f1" />
-            </View>
-            <Text style={styles.footerItemText}>Settings</Text>
-          </TouchableOpacity>
-        </Animated.View>
+          <Animated.View style={{ transform: [{ scale: scaleValue }] }}>
+            <TouchableOpacity
+              style={styles.footerItem}
+              onPressIn={handlePressIn}
+              onPressOut={handlePressOut}
+              onPress={() => navigateWithHaptic('HelpCenter')}
+              activeOpacity={0.7}
+            >
+              <View style={styles.iconContainer}>
+                <Icon name="help" size={20} color="#03CA13" />
+              </View>
+              <Text style={styles.footerItemText}>Help Center</Text>
+            </TouchableOpacity>
+          </Animated.View>
 
-        <Animated.View style={{ transform: [{ scale: scaleValue }] }}>
-          <TouchableOpacity
-            style={styles.footerItem}
-            onPressIn={handlePressIn}
-            onPressOut={handlePressOut}
-            onPress={() => navigateWithHaptic('HelpCenter')}
-            activeOpacity={0.7}
-          >
-            <View style={styles.iconContainer}>
-              <Icon name="help-circle-outline" size={20} color="#6366f1" />
-            </View>
-            <Text style={styles.footerItemText}>Help Center</Text>
-          </TouchableOpacity>
-        </Animated.View>
-
-        <Animated.View style={{ transform: [{ scale: scaleValue }] }}>
-          <TouchableOpacity
-            style={[styles.footerItem, styles.logoutItem]}
-            onPressIn={handlePressIn}
-            onPressOut={handlePressOut}
-            onPress={handleLogout}
-            activeOpacity={0.7}
-          >
-            <View style={[styles.iconContainer, styles.logoutIcon]}>
-              <Icon name="log-out-outline" size={20} color="#ef4444" />
-            </View>
-            <Text style={[styles.footerItemText, styles.logoutText]}>Logout</Text>
-          </TouchableOpacity>
-        </Animated.View>
-      </View>
+          <Animated.View style={{ transform: [{ scale: scaleValue }] }}>
+            <TouchableOpacity
+              style={[styles.footerItem, styles.logoutItem]}
+              onPressIn={handlePressIn}
+              onPressOut={handlePressOut}
+              onPress={handleLogout}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.iconContainer, styles.logoutIcon]}>
+                <Icon name="logout" size={20} color="#ef4444" />
+              </View>
+              <Text style={[styles.footerItemText, styles.logoutText]}>Logout</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+      </LinearGradient>
     </View>
   );
 };
@@ -141,33 +146,28 @@ const CustomDrawer = (props) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
-  },
-  scrollContainer: {
-    paddingBottom: 20,
   },
   drawerHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 20,
-    paddingBottom: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    justifyContent: 'flex-start',
+    gap: 10,
+    padding: 15,
   },
   logo: {
-    width: 36,
-    height: 36,
+    width: 40,
+    height: 40,
     borderRadius: 12,
-    marginRight: 12,
   },
   appName: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#111827',
+    color: 'aliceblue',
+    textAlign: 'center',
+    flex: 1,
   },
   profileSection: {
-    padding: 20,
-    paddingBottom: 10,
+    padding: 15,
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: 'aliceblue',
     marginBottom: 2,
   },
   userEmail: {
@@ -199,32 +199,18 @@ const styles = StyleSheet.create({
   },
   viewProfile: {
     fontSize: 14,
-    color: '#6366f1',
+    color: 'aliceblue',
     fontWeight: '500',
     marginRight: 4,
   },
+
   divider: {
     height: 1,
     backgroundColor: '#f3f4f6',
-    marginVertical: 8,
-    marginHorizontal: 20,
-  },
-  drawerItem: {
-    // borderRadius: 12,
-    // marginHorizontal: 10,
-    // marginVertical: 4,
-  },
-  drawerLabel: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#374151',
-    // marginLeft: -16,
+    marginVertical: 10,
   },
   drawerFooter: {
-    padding: 20,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
+    padding: 10,
   },
   footerItem: {
     flexDirection: 'row',
@@ -245,12 +231,10 @@ const styles = StyleSheet.create({
   footerItemText: {
     fontSize: 15,
     fontWeight: '500',
-    color: '#374151',
+    color: 'aliceblue',
   },
   logoutItem: {
     marginTop: 8,
-  },
-  logoutIcon: {
     backgroundColor: '#fee2e2',
   },
   logoutText: {

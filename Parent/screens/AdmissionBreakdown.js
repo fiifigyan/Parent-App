@@ -8,14 +8,13 @@ import * as FileSystem from 'expo-file-system';
 import { shareAsync } from 'expo-sharing';
 import Toast from 'react-native-toast-message';
 
-const FeeBreakdownPage = ({ navigation }) => {
-  // State management
+const Breakdown = ({ navigation }) => {
+
   const [selectedLevel, setSelectedLevel] = useState('Creche');
   const [selectedGender, setSelectedGender] = useState('Unisex');
   const [expandedSections, setExpandedSections] = useState({});
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Complete fee structure data from PDF
   const feeStructure = {
     levels: ['Creche', 'N1-KG2', 'Grade1-3', 'Grade4-6', 'JHS'],
     genders: ['Unisex', 'Boys', 'Girls'],
@@ -152,7 +151,7 @@ const FeeBreakdownPage = ({ navigation }) => {
     ]
   };
 
-  // Calculate fees based on selections
+  // Let's calculate fees based on selections
   const calculateCurrentFees = () => {
     if (selectedLevel === 'Creche') {
       return {
@@ -179,8 +178,8 @@ const FeeBreakdownPage = ({ navigation }) => {
   };
 
   const currentFees = calculateCurrentFees();
+  const admissionFormPrice = 100;
 
-  // Toggle section expansion
   const toggleSection = (sectionId) => {
     setExpandedSections(prev => ({
       ...prev,
@@ -188,7 +187,6 @@ const FeeBreakdownPage = ({ navigation }) => {
     }));
   };
 
-  // Generate PDF using expo-print
   const generatePDF = async () => {
     try {
       setIsProcessing(true);
@@ -246,15 +244,12 @@ const FeeBreakdownPage = ({ navigation }) => {
         </html>
       `;
 
-      // Generate PDF file
       const { uri } = await Print.printToFileAsync({ html });
-      
-      // Save to device storage
+
       const fileName = `OAIS_Fees_${selectedLevel}_${selectedGender}_${Date.now()}.pdf`;
       const newUri = `${FileSystem.documentDirectory}${fileName}`;
       await FileSystem.copyAsync({ from: uri, to: newUri });
 
-      // Share the PDF
       await shareAsync(newUri);
 
       Toast.show({
@@ -275,20 +270,20 @@ const FeeBreakdownPage = ({ navigation }) => {
     }
   };
 
-  // Navigate to admission form purchase
   const navigateToAdmissionPurchase = () => {
     navigation.navigate('AdmissionPurchase', {
       level: selectedLevel,
       gender: selectedGender,
       amount: currentFees.total,
-      feeDetails: currentFees.items
+      feeDetails: currentFees.items,
+      admissionFormPrice: admissionFormPrice
     });
   };
 
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Text style={styles.header}>School Fees Breakdown</Text>
+        <Text style={styles.header}>Bill For New Admissions</Text>
         
         {/* Selection Controls */}
         <View style={styles.controlsContainer}>
@@ -322,7 +317,11 @@ const FeeBreakdownPage = ({ navigation }) => {
             </View>
           )}
         </View>
-
+        {/* Price og the Admission Form */}
+        <View style={styles.priceContainer}>
+          <Text style={styles.priceLabel}>Price of Admission Form: </Text>
+          <Text style={styles.priceAmt}>GHC {admissionFormPrice.toFixed(2)}</Text>
+        </View>
         {/* Fee Breakdown Table */}
         <DataTable style={styles.dataTable}>
           <DataTable.Header style={styles.tableHeader}>
@@ -425,10 +424,9 @@ const FeeBreakdownPage = ({ navigation }) => {
   );
 };
 
-// Helper functions
 const getRequiredItems = (level) => {
   const baseItems = [
-    '4 Passport Size Photographs',
+    'Passport Size Photo',
     'Birth Certificate (Photocopy)',
     'Immunization Records',
     'Previous School Report Card (if applicable)'
@@ -476,6 +474,24 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#03AC13'
+  },
+  priceContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: 'aliceblue',
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 15
+  },
+  priceLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#03AC13'
+  },
+  priceAmt: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#03AC13'
   },
   dataTable: {
     backgroundColor: 'aliceblue',
@@ -620,4 +636,4 @@ const styles = StyleSheet.create({
   }
 });
 
-export default FeeBreakdownPage;
+export default Breakdown;

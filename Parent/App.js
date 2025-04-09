@@ -6,19 +6,19 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AdmissionProvider } from './context/AdmissionContext';
 import AuthStack from './navigation/AuthStack';
+import AdmissionPhaseStack from './navigation/AdmissionPhaseStack';
+import MainAppStack from './navigation/MainAppStack';
 import StackNavigator from './navigation/StackNavigator';
 import { registerForPushNotifications, useNotificationListener, sendPushTokenToBackend } from './services/NotificationService';
 import { StudentProvider } from './context/StudentContext';
 import { ParentProvider } from './context/ParentContext';
 import { PaymentProvider } from './context/PaymentContext';
-import { ThemeProvider } from './context/ThemeContext';
 import { NotificationProvider } from './context/NotificationContext';
 
 function MainAppContent() {
   const { userInfo, isNewUser } = useAuth();
   const [expoPushToken, setExpoPushToken] = React.useState('');
 
-  // Register for push notifications
   React.useEffect(() => {
     registerForPushNotifications()
       .then((token) => {
@@ -35,12 +35,12 @@ function MainAppContent() {
       <SafeAreaView style={{ flex: 1, backgroundColor: '#03AC13' }}>
         <StatusBar barStyle="default"/>
         {!userInfo ? (
-        <AuthStack />
-      ) : isNewUser ? (
-        <StackNavigator initialRouteName="Welcome" />
-      ) : (
-        <AuthStack initialRouteName="Login" />
-      )}
+          <AuthStack initialRouteName='Onboard' />
+        ) : isNewUser ? (
+          <AdmissionPhaseStack initialRouteName="Welcome" />
+        ) : (
+          <MainAppStack initialRouteName="Drawer" />
+        )}
         <NotificationListener />
       </SafeAreaView>
     </NavigationContainer>
@@ -56,7 +56,6 @@ function NotificationListener() {
 function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider>
         <NotificationProvider>
           <AuthProvider>
             <AdmissionProvider>
@@ -70,7 +69,6 @@ function App() {
             </AdmissionProvider>
           </AuthProvider>
         </NotificationProvider>
-      </ThemeProvider>
     </GestureHandlerRootView>
   );
 }

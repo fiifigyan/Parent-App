@@ -17,12 +17,12 @@ import NotificationSettings from '../screens/NotificationSettings';
 import HomeWorkScreen from '../screens/HomeWork';
 import AdmissionStatus from '../screens/AdmissionStatus';
 import StudentProfile from '../screens/StudentProfile';
-import FeeDetailScreen from '../screens/FeeDetail';
+import Fees from '../screens/FeeDetail';
 import GradesScreen from '../screens/Grades';
 import OTPVerificationScreen from '../screens/OTPVerification';
 import PaymentProcessing from '../screens/PaymentProcessing';
 import PaymentSuccess from '../components/PaymentSuccess';
-import FeeBreakdown from '../screens/AdmissionBreakdown';
+import Breakdown from '../screens/AdmissionBreakdown';
 import AdmissionPurchase from '../screens/AdmissionPurchase';
 import PaymentMethod from '../screens/PaymentMethod';
 
@@ -44,7 +44,7 @@ const StackNavigator = ({ initialRouteName = 'Home' }) => {
       <Stack.Screen name="Student" component={StudentProfile} />
       <Stack.Screen name="AddAccount" component={AddAccountScreen} />
       <Stack.Screen name="SwitchAccount" component={SwitchAccountScreen} />
-      <Stack.Screen name="FeeDetail" component={FeeDetailScreen} />
+      <Stack.Screen name="FeeDetail" component={Fees} />
       <Stack.Screen name="Payment" component={PaymentMethod} />
       <Stack.Screen name="History" component={HistoryScreen} />
       <Stack.Screen name="Events" component={EventScreen} />
@@ -58,7 +58,7 @@ const StackNavigator = ({ initialRouteName = 'Home' }) => {
       <Stack.Screen name="OTP" component={OTPVerificationScreen} />
       <Stack.Screen name="PaymentProcessing" component={PaymentProcessing} />
       <Stack.Screen name="PaymentSuccess" component={PaymentSuccess} />
-      <Stack.Screen name="FeeBreakdown" component={FeeBreakdown} />
+      <Stack.Screen name="AdmissionBreakdown" component={Breakdown} />
       <Stack.Screen name="AdmissionPurchase" component={AdmissionPurchase} />
     </Stack.Navigator>
   );

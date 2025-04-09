@@ -2,8 +2,7 @@ import axios from 'axios';
 import React, { useEffect } from 'react';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// Register for push notifications
+import { API_CONFIG, STORAGE_KEYS } from '../config';
 export const registerForPushNotifications = async () => {
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
   let finalStatus = existingStatus;
@@ -22,7 +21,6 @@ export const registerForPushNotifications = async () => {
   return token;
 };
 
-// Listen for incoming notifications
 export const useNotificationListener = (navigation) => {
   useEffect(() => {
     const subscription = Notifications.addNotificationReceivedListener((notification) => {
@@ -41,7 +39,6 @@ export const useNotificationListener = (navigation) => {
   }, [navigation]);
 };
 
-// Schedule local notifications
 export const scheduleLocalNotification = async (title, body, data, trigger) => {
   await Notifications.scheduleNotificationAsync({
     content: {
@@ -53,22 +50,20 @@ export const scheduleLocalNotification = async (title, body, data, trigger) => {
   });
 };
 
-// Save notification settings
 export const saveSettings = async (settings) => {
   await AsyncStorage.setItem('notificationSettings', JSON.stringify(settings));
 };
 
-// Load notification settings
 export const loadSettings = async () => {
   const settings = await AsyncStorage.getItem('notificationSettings');
   return settings ? JSON.parse(settings) : null;
 };
 
-// Send push token to backend
 export const sendPushTokenToBackend = async (token) => {
   try {
-    await axios.post('https://your-api.com/save-token', { token });
+    await axios.post('https://your-api.com/push-token', { token });
   } catch (error) {
-    console.error('Error sending push token:', error);
+    throw new Error('Failed to send push token to backend');
+    // console.error('Error sending push token:', error);
   }
 };

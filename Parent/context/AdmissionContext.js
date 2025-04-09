@@ -1,5 +1,5 @@
 import React, { createContext, useState, useCallback, useEffect, useRef } from 'react';
-import admissionService from '../services/AdmissionService';
+import AdmissionService from '../services/Admission';
 import { useAuth } from '../context/AuthContext';
 
 export const AdmissionContext = createContext();
@@ -54,6 +54,7 @@ const INITIAL_FORM_STATE = {
 export const AdmissionProvider = ({ children }) => {
   const [formData, setFormData] = useState(INITIAL_FORM_STATE);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [error, setError] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
   const [draftSaveStatus, setDraftSaveStatus] = useState(null);
@@ -61,7 +62,6 @@ export const AdmissionProvider = ({ children }) => {
   const draftSaveTimer = useRef(null);
   const { userInfo } = useAuth();
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => { 
       isMounted.current = false;
@@ -71,7 +71,6 @@ export const AdmissionProvider = ({ children }) => {
     };
   }, []);
 
-  // Auto-save draft when form changes
   useEffect(() => {
     if (isLoading || JSON.stringify(formData) === JSON.stringify(INITIAL_FORM_STATE)) {
       return;
@@ -83,7 +82,7 @@ export const AdmissionProvider = ({ children }) => {
     
     draftSaveTimer.current = setTimeout(async () => {
       try {
-        const result = await admissionService.saveFormDraft(formData);
+        const result = await AdmissionService.saveFormDraft(formData);
         if (isMounted.current && result) {
           setDraftSaveStatus('saved');
           setTimeout(() => {
@@ -104,14 +103,14 @@ export const AdmissionProvider = ({ children }) => {
     };
   }, [formData, isLoading]);
 
-  // Load saved draft on mount
   useEffect(() => {
     const loadDraft = async () => {
       try {
         setIsLoading(true);
-        const draft = await admissionService.loadFormDraft();
+        const draft = await AdmissionService.loadFormDraft();
         if (isMounted.current) {
           setFormData(draft || INITIAL_FORM_STATE);
+          setHasLoaded(true);
         }
       } catch (error) {
         if (isMounted.current) {
@@ -124,10 +123,11 @@ export const AdmissionProvider = ({ children }) => {
       }
     };
     
-    loadDraft();
-  }, []);
+    if (!hasLoaded) {
+      loadDraft();
+    }
+  }, [hasLoaded]);
 
-  // Deep merge helper function
   const deepMerge = useCallback((target, source) => {
     if (typeof target !== 'object' || typeof source !== 'object') {
       return source;
@@ -144,16 +144,14 @@ export const AdmissionProvider = ({ children }) => {
     return output;
   }, []);
 
-  // Update form data
   const updateFormData = useCallback((updates) => {
     setFormData(prev => deepMerge(prev || INITIAL_FORM_STATE, updates));
     setValidationErrors({});
   }, [deepMerge]);
 
-  // Validate form
   const validateForm = useCallback(async () => {
     try {
-      const validation = await admissionService.validateForm(formData || INITIAL_FORM_STATE);
+      const validation = await AdmissionService.validateForm(formData || INITIAL_FORM_STATE);
       if (isMounted.current) {
         setValidationErrors(validation.errors);
       }
@@ -166,7 +164,6 @@ export const AdmissionProvider = ({ children }) => {
     }
   }, [formData]);
 
-  // Submit form
   const submitForm = useCallback(async () => {
     if (isLoading) return null;
   
@@ -178,19 +175,16 @@ export const AdmissionProvider = ({ children }) => {
       const validation = await validateForm();
       if (!validation.isValid) {
         setIsLoading(false);
-        return null;
+        throw new Error('Please fix the validation errors');
       }
   
-      const response = await admissionService.submitAdmissionForm(
-        formData,
-        userInfo?.token
-      );
+      const response = await AdmissionService.submitAdmissionForm(formData);
   
       if (isMounted.current) {
         setFormData(INITIAL_FORM_STATE);
       }
   
-      await admissionService.clearFormDraft();
+      await AdmissionService.clearFormDraft();
       return response;
     } catch (error) {
       if (isMounted.current) {
@@ -202,25 +196,22 @@ export const AdmissionProvider = ({ children }) => {
         setIsLoading(false);
       }
     }
-  }, [formData, validateForm, isLoading, userInfo?.token]);  
+  }, [formData, validateForm, isLoading]);  
 
-  // Reset form
   const resetForm = useCallback(() => {
     setFormData(INITIAL_FORM_STATE);
     setValidationErrors({});
     setError(null);
   }, []);
 
-  // Clear error
   const clearError = useCallback(() => setError(null), []);
 
-  // Get admission status
   const getAdmissionStatus = useCallback(async () => {
     if (!userInfo?.id) return null;
     
     try {
       setIsLoading(true);
-      const response = await admissionService.getAdmissionStatus(
+      const response = await AdmissionService.getAdmissionStatus(
         userInfo.id,
         userInfo.token
       );
