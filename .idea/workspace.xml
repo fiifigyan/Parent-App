@@ -6,8 +6,12 @@
   <component name="ChangeListManager">
     <list default="true" id="da2bf76b-fe0a-48cf-8f47-b05387939a84" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Parent/app.json" beforeDir="false" afterPath="$PROJECT_DIR$/Parent/app.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Parent/eas.json" beforeDir="false" afterPath="$PROJECT_DIR$/Parent/eas.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Parent/components/ScopeGuard.js" beforeDir="false" afterPath="$PROJECT_DIR$/Parent/components/ScopeGuard.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Parent/config.js" beforeDir="false" afterPath="$PROJECT_DIR$/Parent/config.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Parent/context/AuthContext.js" beforeDir="false" afterPath="$PROJECT_DIR$/Parent/context/AuthContext.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Parent/navigation/AdmissionPhaseStack.js" beforeDir="false" afterPath="$PROJECT_DIR$/Parent/navigation/AdmissionPhaseStack.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Parent/navigation/MainAppStack.js" beforeDir="false" afterPath="$PROJECT_DIR$/Parent/navigation/MainAppStack.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Parent/services/AuthenService.js" beforeDir="false" afterPath="$PROJECT_DIR$/Parent/services/AuthenService.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

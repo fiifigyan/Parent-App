@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import jwtDecode from 'jwt-decode';
-import { API_CONFIG, STORAGE_KEYS, SCOPES } from '../config';
+import {jwtDecode} from 'jwt-decode';
+import { API_CONFIG, STORAGE_KEYS, SCOPES, safeTokenLog } from '../config';
 
 const setAuthHeader = (token) => {
   if (token) {
@@ -65,25 +65,46 @@ const processAuthResponse = (response) => {
 };
 
 const makeAuthRequest = async (endpoint, data) => {
+  const url = `${API_CONFIG.BASE_URL}${endpoint}`;
+
+  // Debugging - only shown in development
+  if (__DEV__) {
+    console.groupCollapsed(`🌐 [Network] ${endpoint}`);
+    console.log('Request to:', url);
+    console.log('Payload:', { 
+      ...data, 
+      password: data.password ? '••••••' : undefined 
+    });
+    console.groupEnd();
+  }
+
   try {
-    const url = `${API_CONFIG.BASE_URL}${endpoint}`;
     const response = await axios.post(url, data, {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
-      timeout: API_CONFIG.REQUEST_TIMEOUT || 60000
+      timeout: API_CONFIG.REQUEST_TIMEOUT || 10000
     });
+
     return processAuthResponse(response);
+
   } catch (error) {
-    let userMessage = 'An error occurred. Please try again.';
+    if (__DEV__) {
+      console.groupCollapsed(`❌ [Error Details] ${endpoint}`);
+      console.log('Full Error:', error);
+      console.log('Status Code:', error.response?.status);
+      console.log('Server Response:', error.response?.data);
+      console.groupEnd();
+    }
+    let userMessage = 'Something went wrong. Please try again.';
     
     if (error.code === 'ECONNABORTED') {
-      userMessage = 'Request timed out. Please check your internet connection.';
+      userMessage = 'Connection timed out. Check your internet connection.';
     } else if (error.response) {
       switch (error.response.status) {
         case 400:
-          userMessage = 'Invalid request. Please check your input.';
+          userMessage = 'Invalid request. Please check your information.';
           break;
         case 401:
           userMessage = 'Session expired. Please log in again.';
@@ -92,24 +113,16 @@ const makeAuthRequest = async (endpoint, data) => {
           userMessage = 'You don\'t have permission for this action.';
           break;
         case 404:
-          userMessage = 'The requested service is unavailable.';
+          userMessage = 'Service unavailable. Please try later.';
           break;
         case 500:
-          userMessage = 'Server error. Please try again later.';
+          userMessage = 'Server error. Our team has been notified.';
           break;
-        default:
-          userMessage = error.response.data?.message || userMessage;
       }
     } else if (error.request) {
-      userMessage = 'No response from server. Check your network connection.';
+      userMessage = 'No response from server. Check your network.';
     }
 
-    console.error('Auth request failed:', {
-      endpoint,
-      error: error.message,
-      response: error.response?.data
-    });
-    
     throw new Error(userMessage);
   }
 };
@@ -118,12 +131,17 @@ const AuthService = {
   async signup(userData) {
     try {
       const result = await makeAuthRequest(API_CONFIG.AUTH_ENDPOINTS.SIGNUP, userData);
+      safeTokenLog(result.token, 'Signup');
       await manageAuthToken(result.token);
       return {
         ...result,
         message: result.message || 'Account created successfully!',
-
         scopes: SCOPES.ADMISSION_PHASE,
+        user: {
+          ...result.user,
+          isAdmissionApproved: false,
+          isNewUser: true,
+        }
       };
     } catch (error) {
       console.error('Signup failed:', error);
@@ -134,6 +152,7 @@ const AuthService = {
   async login(credentials) {
     try {
       const result = await makeAuthRequest(API_CONFIG.AUTH_ENDPOINTS.LOGIN, credentials);
+      safeTokenLog(result.token, 'Login');
       await manageAuthToken(result.token);
 
       const scopes = result.user?.isAdmissionApproved 
@@ -199,21 +218,23 @@ const AuthService = {
   async verifyToken() {
     try {
       const token = await AsyncStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
+      if (!token) return null;
+  
       const decoded = jwtDecode(token);
       if (decoded.exp && Date.now() >= decoded.exp * 1000) {
         await this.logout();
-        throw new Error('Session expired');
+        return null;
       }
-
-      return { token, payload: decoded };
+  
+      return { 
+        token, 
+        payload: decoded,
+        scopes: decoded.scope ? decoded.scope.split(' ') : []
+      };
     } catch (error) {
       console.error('Token verification failed:', error);
-      await this.logout(); // Clear invalid token
-      throw new Error('Session verification failed. Please log in again.');
+      await this.logout();
+      return null;
     }
   }
 };

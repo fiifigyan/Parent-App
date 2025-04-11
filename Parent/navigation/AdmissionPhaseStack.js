@@ -21,7 +21,7 @@ const AdmissionPhaseStack = ({ initialRouteName = 'Welcome' }) => {
       
       <Stack.Screen name="AdmissionBreakdown">
         {() => (
-          <ScopeGuard requiredScope="purchase:form">
+          <ScopeGuard requiredScope="purchase:form, make:payments">
             <Breakdown />
           </ScopeGuard>
         )}
@@ -29,7 +29,7 @@ const AdmissionPhaseStack = ({ initialRouteName = 'Welcome' }) => {
       
       <Stack.Screen name="AdmissionPurchase">
         {() => (
-          <ScopeGuard requiredScope="purchase:form">
+          <ScopeGuard requiredScope="purchase:form, make:payments, view:payments">
             <AdmissionPurchase />
           </ScopeGuard>
         )}
@@ -45,7 +45,7 @@ const AdmissionPhaseStack = ({ initialRouteName = 'Welcome' }) => {
       
       <Stack.Screen name="AdmissionStatus">
         {() => (
-          <ScopeGuard requiredScope="submit:admission">
+          <ScopeGuard requiredScope="view:status">
             <AdmissionStatus />
           </ScopeGuard>
         )}

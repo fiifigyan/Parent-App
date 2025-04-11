@@ -1,8 +1,8 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AuthService from '../services/AuthenService';
-import jwtDecode from 'jwt-decode';
-import { STORAGE_KEYS } from '../config';
+import {jwtDecode} from 'jwt-decode';
+import { STORAGE_KEYS, safeTokenLog } from '../config';
 
 export const AuthContext = createContext();
 
@@ -14,20 +14,18 @@ export const AuthProvider = ({ children }) => {
   const [isNewUser, setIsNewUser] = useState(false);
 
   const hasScope = useCallback((requiredScope) => {
-    if (!authToken) return false;
+    if (!userInfo?.scopes) return false;
     
-    try {
-      const decoded = jwtDecode(authToken);
-      const tokenScopes = decoded.scope ? decoded.scope.split(' ') : [];
-      return tokenScopes.includes(requiredScope);
-    } catch (error) {
-      console.error('Scope check error:', error);
-      return false;
-    }
-  }, [authToken]);
+    const requiredScopes = requiredScope.split(',').map(s => s.trim());
+    
+    return requiredScopes.every(scope => 
+      userInfo.scopes.includes(scope)
+    );
+  }, [userInfo]);
 
   const saveUserData = useCallback(async (data) => {
     try {
+      safeTokenLog(data.token, 'Pre-Storage');
       await AsyncStorage.multiSet([
         [STORAGE_KEYS.USER_INFO, JSON.stringify(data)],
         [STORAGE_KEYS.AUTH_TOKEN, data.token]

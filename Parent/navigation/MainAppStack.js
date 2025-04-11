@@ -13,6 +13,12 @@ import HomeWorkScreen from '../screens/HomeWork';
 import StudentProfile from '../screens/StudentProfile';
 import Fees from '../screens/FeeDetail';
 import GradesScreen from '../screens/Grades';
+import PaymentMethod from '../screens/PaymentMethod';
+import AddAccountScreen from '../screens/AddAccount';
+import SwitchAccountScreen from '../screens/SwitchAccount';
+import HistoryScreen from '../screens/History';
+import PaymentProcessing from '../screens/PaymentProcessing';
+import PaymentSuccess from '../components/PaymentSuccess';
 
 
 const Stack = createNativeStackNavigator();
