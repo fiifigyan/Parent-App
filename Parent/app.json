@@ -39,11 +39,10 @@
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#03AC13",
-          "dark":
-            {
-              "image": "./assets/icons/splash-icon-dark.png",
-              "backgroundColor": "#03AC13"
-            }
+          "dark": {
+            "image": "./assets/icons/splash-icon-dark.png",
+            "backgroundColor": "#03AC13"
+          }
         }
       ],
       "expo-video"
@@ -52,6 +51,12 @@
       "eas": {
         "projectId": "1d59f370-695b-4d90-b367-d9547244a92c"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/1d59f370-695b-4d90-b367-d9547244a92c"
     }
   }
 }
