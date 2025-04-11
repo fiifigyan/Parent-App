@@ -8,11 +8,6 @@
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Parent/app.json" beforeDir="false" afterPath="$PROJECT_DIR$/Parent/app.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Parent/eas.json" beforeDir="false" afterPath="$PROJECT_DIR$/Parent/eas.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Parent/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/Parent/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Parent/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/Parent/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Parent/screens/AdmissionForm.js" beforeDir="false" afterPath="$PROJECT_DIR$/Parent/screens/AdmissionForm.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Parent/screens/AdmissionStatus.js" beforeDir="false" afterPath="$PROJECT_DIR$/Parent/screens/AdmissionStatus.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Parent/services/AuthenService.js" beforeDir="false" afterPath="$PROJECT_DIR$/Parent/services/AuthenService.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
