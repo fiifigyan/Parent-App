@@ -96,7 +96,6 @@ const AdmissionForm = () => {
 
   const handleSubmit = async () => {
     try {
-      // Check if user has required scope
       if (!hasScope('submit:admission')) {
         Alert.alert(
           'Permission Required',

@@ -116,7 +116,7 @@ const AdmissionStatus = ({ route }) => {
   if (isLoading && !admissionData) {
     return (
       <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size="large" color="#03AC13" />
       </View>
     );
   }
@@ -129,7 +129,7 @@ const AdmissionStatus = ({ route }) => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={["#007AFF"]}
+            colors={["#03AC13"]}
           />
         }
       >
@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
   retryText: {
-    color: '#007AFF',
+    color: '#03AC13',
     fontWeight: '500',
   },
 });

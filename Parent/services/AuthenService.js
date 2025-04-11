@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import jwtDecode from 'jwt-decode';
-import { API_CONFIG, STORAGE_KEYS } from '../config';
+import { API_CONFIG, STORAGE_KEYS, SCOPES } from '../config';
 
 const setAuthHeader = (token) => {
   if (token) {
@@ -122,7 +122,7 @@ const AuthService = {
       return {
         ...result,
         message: result.message || 'Account created successfully!',
-        // New users get admission phase scopes only
+
         scopes: SCOPES.ADMISSION_PHASE,
       };
     } catch (error) {
@@ -135,8 +135,7 @@ const AuthService = {
     try {
       const result = await makeAuthRequest(API_CONFIG.AUTH_ENDPOINTS.LOGIN, credentials);
       await manageAuthToken(result.token);
-      
-      // Determine scopes based on user status
+
       const scopes = result.user?.isAdmissionApproved 
         ? SCOPES.MAIN_APP 
         : SCOPES.ADMISSION_PHASE;
